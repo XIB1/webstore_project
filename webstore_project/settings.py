@@ -78,7 +78,7 @@ WSGI_APPLICATION = 'webstore_project.wsgi.application'
 DATABASES = {
     'default': {
         'ENGINE': 'django.db.backends.sqlite3',
-        'NAME': BASE_DIR / 'test.db',
+        'NAME': BASE_DIR / 'webstore.db',
     }
 }
 

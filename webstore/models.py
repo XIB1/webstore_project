@@ -15,7 +15,8 @@ class OrderHeader(models.Model):
     order_datetime = models.DateTimeField()
 
 class Material(models.Model):
-    material_id = models.CharField(max_length=255, primary_key=True)
+    material_id = models.AutoField(primary_key=True)
+    name = models.CharField(max_length=255)
     description = models.TextField()
     #weight = models.FloatField()
     #volume = models.FloatField()
@@ -31,19 +32,15 @@ class OrderLine(models.Model):
     order_text = models.TextField()
     status = models.CharField(max_length=32)
 
-'''class Stock(models.Model):
-    material = models.OneToOneField(Material, on_delete=models.CASCADE, primary_key=True)
-    stock = models.IntegerField()
-    location = models.CharField(max_length=255)
-    status = models.CharField(max_length=255)'''
-
 class BasketHeader(models.Model):
-    basket_id = models.CharField(max_length=255, primary_key=True)
+    basket_id = models.CharField(max_length=64, primary_key=True)
     #user = models.ForeignKey(User, on_delete=models.CASCADE)
     basket_saved = models.DateTimeField()
-    cookie = models.CharField(max_length=64)
+    #cookie = models.CharField(max_length=64)
 
 class BasketLine(models.Model):
-    basket = models.ForeignKey(BasketHeader, on_delete=models.CASCADE, primary_key=True)
+    basket_line_id = models.AutoField(primary_key=True)
+    basket = models.ForeignKey(BasketHeader, on_delete=models.CASCADE)
+    line = models.IntegerField()
     material = models.ForeignKey(Material, on_delete=models.CASCADE)
     #order_key = models.IntegerField()
