@@ -7,11 +7,21 @@ from django.utils import timezone
 
 from django.utils.crypto import get_random_string
 
+
 def index(request):
+
+    cookie = request.COOKIES.get("basket_id")
+
     token = get_random_string(64)
-    return render(
+
+    response = render(
         request, 
         "webstore/index.html", {
             "token":token,
         }
     )
+
+    if cookie == None:
+        response.set_cookie("basket_id", token, max_age=3600)
+
+    return response
