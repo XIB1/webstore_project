@@ -43,4 +43,5 @@ class BasketLine(models.Model):
     basket = models.ForeignKey(BasketHeader, on_delete=models.CASCADE)
     line = models.IntegerField()
     material = models.ForeignKey(Material, on_delete=models.CASCADE)
+    amount = models.IntegerField(default=1)
     #order_key = models.IntegerField()
