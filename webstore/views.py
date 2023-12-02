@@ -1,18 +1,18 @@
 from django.shortcuts import render, get_object_or_404
 from django.http import HttpResponse, HttpResponseRedirect
-from django.http import Http404
-from django.urls import reverse
-from django.views import generic
-from django.utils import timezone
+from django.core.exceptions import ObjectDoesNotExist
+from django.contrib.auth import authenticate, login
 
 from django.utils.crypto import get_random_string
 
-import pandas as pd
 from datetime import datetime
 
-from .models import Material, BasketHeader, BasketLine
+from .models import *
+from django.contrib.auth.models import User
 
-def index_get(request):
+
+def index(request):
+
     basket_cookie = request.COOKIES.get("basket_id")
 
     token = get_random_string(64)
@@ -29,15 +29,6 @@ def index_get(request):
     
     return response
 
-def index(request):
-
-    if request.method == "GET":
-        response = index_get(request)
-    elif request.method == "POST":
-        add_item(request)
-
-    return response
-
 
 def add_item(request, material_id):
 
@@ -48,7 +39,6 @@ def add_item(request, material_id):
         basket = BasketHeader(basket_id=basket_cookie, basket_saved=datetime.now())
     
     basket.save()
-
 
     item_count = basket.basketline_set.count()
 
@@ -66,12 +56,70 @@ def add_item(request, material_id):
     except:
         print("mat not found")
 
+    return HttpResponse(status=200)
 
 
-    return HttpResponseRedirect(reverse("webstore:index"))
+def add_user(request): #, email, username, password):
+
+    if request.method == "POST":
+
+        email = request.POST['email']
+        username = request.POST['username']
+        password = request.POST['password']
+    
+        try:
+            try:
+                user = User.objects.get(email=email)
+            except ObjectDoesNotExist:
+                user = User.objects.create_user(
+                    email=email,
+                    username=username,
+                    password=password
+                )
+                print(user)
+                user.save()
+            response = HttpResponse(status=200)
+        except:
+            response = HttpResponse(status=400)
+
+    return response
 
 
+def login_user(request):
 
+    if request.method == "POST":
+
+        session_key = get_random_string(64)
+
+        username = request.POST['username']
+        password = request.POST['password']
+
+        print(username, password)
+
+        user = authenticate(request, username=username, password=password)
+
+        print(user)
+
+        if user != None:
+            login(request, user)
+
+            request.session['session_key'] = session_key
+
+            response = HttpResponse(status=200)
+        else:
+            response = HttpResponse(status=204)
+    
+    return response
+
+
+def check_login(request):
+    if request.user.is_authenticated:
+        return HttpResponse("User ok")
+    else:
+        return HttpResponse("Not ok")
+
+
+'''
 def load_data(request):
     df = pd.read_excel("C:\\repos\\webstore_project\\resources\\material.xlsx", sheet_name="material")
 
@@ -94,3 +142,4 @@ def load_data(request):
 
     return HttpResponse(df)
 
+'''

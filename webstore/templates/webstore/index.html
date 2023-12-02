@@ -10,11 +10,36 @@
 <p>{{token}}</p>
 
 <form method="post">
-    {% csrf_token %}
     <button>Add to cart</button>
 </form>
 
-<input type="submit" value="Start" onclick="submit()">
+<input type="submit" value="Submit item" onclick="submit_item()">
+
+<input type="submit" value="Submit user" onclick="submit_user()">
+
+<br><br>
+
+<form>
+    {% csrf_token %}
+    <input type="text" id="username" placeholder="Username">
+    <input type="password" id="password" placeholder="Password">
+    <input type="text" id="email" placeholder="Email">
+    <input type="submit" value="Create user" onclick="submit_user_2()">
+</form>
+
+<br><br>
+
+<form>
+    {% csrf_token %}
+    <input type="text" id="username_login" placeholder="Username">
+    <input type="password" id="password_login" placeholder="Password">
+    <input type="submit" value="Login" onclick="submit_login(event)">
+</form>
+
+<br><br>
+
+<p id="response_content_show"></p>
+
 
 <script type="text/javascript">
 
@@ -33,7 +58,7 @@
         return cookieValue;
     }
 
-    function submit() {
+    function submit_item() {
         var xhr = new XMLHttpRequest();
         xhr.onreadystatechange = function () {
             if (xhr.readyState === 4) {
@@ -47,6 +72,83 @@
         xhr.send();
     }
 
+    function submit_user() {
+        var xhr = new XMLHttpRequest();
+        xhr.onreadystatechange = function () {
+            if (xhr.readyState === 4) {
+                // Handle the response here
+            }
+        }
+
+        xhr.open('POST', '/webstore/add_user/fredrik.snarbacka@gmail.com/fredds/password/', true);
+        xhr.setRequestHeader('X-CSRFToken', getCookie('csrftoken'));
+
+        xhr.send();
+    }
+
+    function submit_user_2() {
+        var xhr = new XMLHttpRequest();
+        var data = new FormData();
+        data.append('username', document.getElementById('username').value);
+        data.append('password', document.getElementById('password').value);
+        data.append('email', document.getElementById('email').value);
+        data.append('csrfmiddlewaretoken', getCSRFToken()); // Function to get CSRF token
+
+        xhr.open('POST', '/webstore/add_user/', true);
+        xhr.onreadystatechange = function() {
+            if (xhr.readyState === 4 && xhr.status === 200) {
+                // Handle successful user creation
+            }
+        };
+        xhr.send(data);
+    }
+
+    function submit_login(event) {
+        event.preventDefault();
+        var xhr = new XMLHttpRequest();
+        var data = new FormData();
+        data.append('username', document.getElementById('username_login').value);
+        data.append('password', document.getElementById('password_login').value);
+        data.append('csrfmiddlewaretoken', getCSRFToken()); // Function to get CSRF token
+
+        xhr.open('POST', '/webstore/login_user/', true);
+        xhr.onreadystatechange = function() {
+            if (xhr.readyState === 4) {
+                if (xhr.status === 200) {
+                    var el = document.getElementById('response_content_show');
+                    if (el) {
+                        el.textContent = 'Login successful'
+                    }
+                } else if (xhr.status === 204) {
+                    var el = document.getElementById('response_content_show');
+                    if (el) {
+                        el.textContent = 'User name or password incorrect'
+                    }
+                }
+            }
+        }
+        
+        xhr.send(data);
+    }
+
+    function getCSRFToken() {
+        let csrfToken = null;
+        if (document.cookie) {
+            const cookies = document.cookie.split(';');
+            for (let i = 0; i < cookies.length; i++) {
+                const cookie = cookies[i].trim();
+                if (cookie.startsWith('csrftoken=')) {
+                    csrfToken = cookie.substring('csrftoken='.length);
+                    break;
+                }
+            }
+        }
+        return csrfToken;
+}
+
+
+
 </script>
+
 
 </body>
