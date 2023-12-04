@@ -11,5 +11,6 @@ urlpatterns = [
     #path("add_user/<str:email>/<str:username>/<str:password>/", views.add_user, name="add_user"),
     path("add_user/", views.add_user, name="add_user"),
     path("login_user/", views.login_user, name="login_user"),
-    path("check_login/", views.check_login, name="check_login")
+    path("check_login/", views.check_login, name="check_login"),
+    path("place_order/", views.place_order, name="place_order"),
 ]

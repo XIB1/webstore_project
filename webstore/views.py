@@ -6,6 +6,7 @@ from django.contrib.auth import authenticate, login
 from django.utils.crypto import get_random_string
 
 from datetime import datetime
+from django.utils import timezone
 
 from .models import *
 from django.contrib.auth.models import User
@@ -33,10 +34,18 @@ def index(request):
 def add_item(request, material_id):
 
     basket_cookie = request.COOKIES.get("basket_id")
+
+    response = HttpResponse()
+    
+    if basket_cookie == None:
+        basket_cookie = get_random_string(64)
+        response.set_cookie("basket_id", basket_cookie, max_age=3600)
+
+    
     try:
         basket = BasketHeader.objects.get(pk=basket_cookie)
     except:
-        basket = BasketHeader(basket_id=basket_cookie, basket_saved=datetime.now())
+        basket = BasketHeader(basket_id=basket_cookie, basket_saved=timezone.now())
     
     basket.save()
 
@@ -52,14 +61,16 @@ def add_item(request, material_id):
         except:
             line = BasketLine(line=item_count + 1, material=mat, amount=1, basket=basket)
             line.save()
+        
+        basket.basket_saved = timezone.now()
     
     except:
         print("mat not found")
 
-    return HttpResponse(status=200)
+    return response
 
 
-def add_user(request): #, email, username, password):
+def add_user(request):
 
     if request.method == "POST":
 
@@ -117,6 +128,49 @@ def check_login(request):
         return HttpResponse("User ok")
     else:
         return HttpResponse("Not ok")
+
+
+def place_order(request):
+
+    if request.user.id == None:
+        return HttpResponse(status=401)
+    
+    user = request.user
+
+    basket_cookie = request.COOKIES.get("basket_id")
+
+    try:
+        basket = BasketHeader.objects.get(basket_id=basket_cookie)
+    except ObjectDoesNotExist:
+        return HttpResponse(status=204)
+    
+    try:
+        new_order = OrderHeader(
+            user=user,
+            status="Order Received",
+            order_datetime=timezone.now()
+        )
+
+        new_order.save()
+    except:
+        return HttpResponse("Could not create order")
+    
+    try:
+        for item in basket.basketline_set.all():
+            order_line = new_order.orderline_set.create(
+                order_item=item.line,
+                material=item.material,
+                amount=item.amount,
+                order_text="",
+                status="Not processed"
+            )
+            order_line.save()
+    except:
+        return HttpResponse("Issue creating order lines")
+    
+    basket.delete()
+
+    return HttpResponse("Success")
 
 
 '''

@@ -10,6 +10,7 @@
 <p>{{token}}</p>
 
 <form method="post">
+    {% csrf_token %}
     <button>Add to cart</button>
 </form>
 
@@ -34,6 +35,13 @@
     <input type="text" id="username_login" placeholder="Username">
     <input type="password" id="password_login" placeholder="Password">
     <input type="submit" value="Login" onclick="submit_login(event)">
+</form>
+
+<br><br>
+
+<form>
+    {% csrf_token %}
+    <input type="submit" value="Place order" onclick="place_order(event)">
 </form>
 
 <br><br>
@@ -81,6 +89,21 @@
         }
 
         xhr.open('POST', '/webstore/add_user/fredrik.snarbacka@gmail.com/fredds/password/', true);
+        xhr.setRequestHeader('X-CSRFToken', getCookie('csrftoken'));
+
+        xhr.send();
+    }
+
+    function place_order(event) {
+        event.preventDefault();
+        var xhr = new XMLHttpRequest();
+        xhr.onreadystatechange = function () {
+            if (xhr.readyState === 4) {
+                // Handle the response here
+            }
+        }
+
+        xhr.open('POST', '/webstore/place_order/', true);
         xhr.setRequestHeader('X-CSRFToken', getCookie('csrftoken'));
 
         xhr.send();

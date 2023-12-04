@@ -30,7 +30,8 @@ class OrderLine(models.Model):
     order = models.ForeignKey(OrderHeader, on_delete=models.CASCADE)
     order_item = models.IntegerField()
     material = models.ForeignKey(Material, on_delete=models.CASCADE)
-    order_text = models.TextField()
+    amount = models.IntegerField(default=1)
+    order_text = models.TextField(default="")
     status = models.CharField(max_length=32)
 
 class BasketHeader(models.Model):
@@ -43,3 +44,4 @@ class BasketLine(models.Model):
     line = models.IntegerField()
     material = models.ForeignKey(Material, on_delete=models.CASCADE)
     amount = models.IntegerField(default=1)
+    order_text = models.TextField(default="")
