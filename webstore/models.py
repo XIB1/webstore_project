@@ -14,7 +14,7 @@ class User(models.Model):
 
 class OrderHeader(models.Model):
     order_id = models.AutoField(primary_key=True)
-    user = models.ForeignKey(User, on_delete=models.CASCADE)
+    user = models.ForeignKey(User, on_delete=models.RESTRICT)
     status = models.CharField(max_length=255)
     order_datetime = models.DateTimeField()
 
@@ -26,16 +26,22 @@ class Material(models.Model):
     stock = models.IntegerField()
     image = models.CharField(max_length=255)
 
+    def __str__(self):
+        return str(self.name)
+    def __int__(self):
+        return self.material_id
+
 class OrderLine(models.Model):
     order = models.ForeignKey(OrderHeader, on_delete=models.CASCADE)
     order_item = models.IntegerField()
-    material = models.ForeignKey(Material, on_delete=models.CASCADE)
+    material = models.ForeignKey(Material, on_delete=models.RESTRICT)
     amount = models.IntegerField(default=1)
     order_text = models.TextField(default="")
     status = models.CharField(max_length=32)
 
 class BasketHeader(models.Model):
     basket_id = models.CharField(max_length=64, primary_key=True)
+    user = models.ForeignKey(User, on_delete=models.CASCADE, null=True)
     basket_saved = models.DateTimeField()
 
 class BasketLine(models.Model):

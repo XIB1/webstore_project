@@ -1,7 +1,8 @@
-from django.shortcuts import render, get_object_or_404
-from django.http import HttpResponse, HttpResponseRedirect
+from django.shortcuts import render, get_object_or_404, redirect
+from django.http import HttpResponse, HttpResponseRedirect, JsonResponse
 from django.core.exceptions import ObjectDoesNotExist
-from django.contrib.auth import authenticate, login
+from django.contrib.auth import authenticate, login, logout
+from django.urls import reverse
 
 from django.utils.crypto import get_random_string
 
@@ -15,21 +16,88 @@ from django.contrib.auth.models import User
 def index(request):
 
     basket_cookie = request.COOKIES.get("basket_id")
+    count = 0
 
-    token = get_random_string(64)
+    if basket_cookie != None:
+        try:
+            basket = BasketHeader.objects.get(pk=basket_cookie)
+            count = basket.basketline_set.count()
+        except:
+            pass
 
     response = render(
         request, 
         "webstore/index.html", {
-            "token":token,
+            "token":"ok",
+            "basket_count":count
         }
     )
 
     if basket_cookie == None:
+        token = get_random_string(64)
         response.set_cookie("basket_id", token, max_age=3600)
     
     return response
 
+
+def get_materials(request, page_num):
+
+    basket_cookie = request.COOKIES.get("basket_id")
+
+    mats = Material.objects.all()[20*(page_num - 1):20*page_num]
+
+    mat_data = []
+    for m in mats:
+        d = {
+            'name': m.name,  # Assuming 'line' is a serializable field
+            'desc': m.description,  # Convert foreign key or complex data to string or a serializable format
+            'price': m.price,
+            'stock': m.stock,
+            'image':m.image,
+        }
+        mat_data.append(d)
+
+    response = JsonResponse({"items":mat_data})
+
+    if basket_cookie == None:
+        token = get_random_string(64)
+        response.set_cookie("basket_id", token, max_age=3600)
+    
+    return response
+
+def get_basket(request):
+
+    basket_cookie = request.COOKIES.get("basket_id")
+    print(basket_cookie)
+    
+    '''    if basket_cookie == None:
+        token = get_random_string(64)
+        response = HttpResponse()
+        response.set_cookie("basket_id", token, max_age=3600)
+    else:
+    '''
+    try:
+        basket = BasketHeader.objects.get(pk=basket_cookie)
+        print(basket)
+        lines = basket.basketline_set.all()
+        lines_data = []
+        for line in lines:
+            line_data = {
+                'line': line.line,  # Assuming 'line' is a serializable field
+                'material': int(line.material),  # Convert foreign key or complex data to string or a serializable format
+                'amount': line.amount,
+                'order_text': line.order_text,
+            }
+            lines_data.append(line_data)
+        #lines_data = list(lines.values('line', 'material', 'amount', 'order_text'))
+        response = JsonResponse({"items":lines_data})
+    except ObjectDoesNotExist:
+        response = JsonResponse({"error": "Basket not found"}, status=404)
+    except Exception as e:
+        response = JsonResponse({"error": str(e)}, status=500)
+    
+    return response
+    
 
 def add_item(request, material_id):
 
@@ -47,6 +115,7 @@ def add_item(request, material_id):
     except:
         basket = BasketHeader(basket_id=basket_cookie, basket_saved=timezone.now())
     
+    basket.basket_saved = timezone.now()
     basket.save()
 
     item_count = basket.basketline_set.count()
@@ -116,11 +185,37 @@ def login_user(request):
 
             request.session['session_key'] = session_key
 
-            response = HttpResponse(status=200)
+            response = HttpResponseRedirect(reverse("webstore:index"))
+
+            
+            basket_cookie = request.COOKIES.get("basket_id")
+
+            if basket_cookie == None:
+                basket_cookie = get_random_string(64)
+                response.set_cookie("basket_id", basket_cookie, max_age=3600)
+            
+            try:
+                basket = BasketHeader.objects.get(pk=basket_cookie)
+            except ObjectDoesNotExist:
+                try:
+                    basket = BasketHeader.objects.get(user=user)
+                    response.set_cookie("basket_id", basket.basket_id, max_age=3600)
+                except ObjectDoesNotExist:
+                    basket = BasketHeader(basket_id=basket_cookie)
+            
+            basket.user = user
+            basket.basket_saved = timezone.now()
+            basket.save()
+
         else:
             response = HttpResponse(status=204)
-    
+
     return response
+
+
+def logout_user(request):
+    logout(request)
+    return HttpResponseRedirect(reverse("webstore:index"))
 
 
 def check_login(request):
