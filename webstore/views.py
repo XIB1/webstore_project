@@ -49,8 +49,9 @@ def get_materials(request, page_num):
     mat_data = []
     for m in mats:
         d = {
-            'name': m.name,  # Assuming 'line' is a serializable field
-            'desc': m.description,  # Convert foreign key or complex data to string or a serializable format
+            'id': m.material_id,
+            'name': m.name,
+            'desc': m.description,
             'price': m.price,
             'stock': m.stock,
             'image':m.image,
