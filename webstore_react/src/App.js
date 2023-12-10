@@ -47,7 +47,7 @@ const Card = ({ item }) => {
             </td>
 
             <td style={{ left: '50%'}}>
-              <p>{item.stock} available in stock</p>
+              <p>{item.stock} in stock</p>
             </td>
 
             <td>
@@ -94,18 +94,41 @@ function App() {
   return (
     <div className="App">
       
+      <header style={{ 
+        height: 'max(7vh, 50px)',
+        top: '0%',
+        position: 'sticky',
+        backgroundColor: 'limegreen',
+        }}>
 
+      </header>
 
       <div style={{ 
+        width: '80%',
         maxWidth: '1200px',
-        minWidth: '600px',
+        minWidth: '700px',
+        marginLeft: 'auto',
+        marginRight: 'auto',
         }}>
 
         {data.map(item => (
           <Card key={item.id} item={item} />
         ))}
 
+        <div style={{ margin: '20px' }}>
+          <input type='submit' value='Previous page'/>
+          <input type='submit' value='Next page'/>
+        </div>
+
       </div>
+
+
+      <footer style={{ 
+        height: '200px',
+        backgroundColor: 'lightgrey',
+        }}>
+
+      </footer>
 
     </div>
 
