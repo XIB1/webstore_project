@@ -1,6 +1,7 @@
 import logo from './logo.svg';
 import './App.css';
 
+
 import React, { useState, useEffect } from 'react';
 
 
@@ -21,7 +22,7 @@ const Card = ({ item }) => {
     </span>
   ));
 
-  console.log(item)
+  //console.log(item)
 
   return (
       <div style={{ 
@@ -34,13 +35,11 @@ const Card = ({ item }) => {
         maxHeight: '10%',
         }}>
           <table style={{ 
-            //tableLayout: 'fixed',
             minWidth: '100%',
-            maxHeight: '100px',
-            }}> <tr>
+            }}> <tbody><tr>
 
             <td style={{ width: '175px'}}><img src={imagePath} style={{ maxWidth: '175px', minWidth: '50px'}} /></td>
-            
+
             <td style={{ minWidth: '300px', width: '35%'}}>
               <h3>{item.name}</h3>
               <p>{descriptionWithLineBreaks}</p>
@@ -59,16 +58,54 @@ const Card = ({ item }) => {
               
             </td>
 
-            </tr>
+            </tr></tbody>
           </table>
       </div>
   );
 };
 
 
+const Header = () => {
+
+  return (
+    
+    <header style={{ 
+      height: 'max(7vh, 50px)',
+      width: '100vw',
+      top: '0%',
+      position: 'sticky',
+      backgroundColor: 'limegreen',
+      display: 'flex',
+      float: 'left',
+    }}>
+      
+      <div style={{ 
+        left: '15px',
+        top: '50%',
+        transform: 'translateY(-50%)',
+        position: 'absolute',
+        height: '5vh',
+        width: '5vh',
+        }}>
+        
+        <img src='menu.png' style={{ width: 'max(5vh, 36px)' }}/>
+
+      </div>
+
+    </header>
+  )
+}
+
+
 function App() {
 
   const [data, setData] = useState([]);
+  const [pageNumber, setPageNumber] = useState(1);
+
+  const goToNextPage = () => setPageNumber(prevPageNumber => prevPageNumber + 1);
+  const goToPreviousPage = () => setPageNumber(prevPageNumber => Math.max(prevPageNumber - 1, 1));
+
+  console.log(pageNumber)
 
   useEffect(() => {
     fetch('http://localhost:8000/webstore/get_materials/1/', {
@@ -92,16 +129,10 @@ function App() {
 
 
   return (
+    
     <div className="App">
       
-      <header style={{ 
-        height: 'max(7vh, 50px)',
-        top: '0%',
-        position: 'sticky',
-        backgroundColor: 'limegreen',
-        }}>
-
-      </header>
+      <Header></Header>
 
       <div style={{ 
         width: '80%',
@@ -116,8 +147,8 @@ function App() {
         ))}
 
         <div style={{ margin: '20px' }}>
-          <input type='submit' value='Previous page'/>
-          <input type='submit' value='Next page'/>
+          <button onClick={goToPreviousPage} >Previous page</button>
+          <button onClick={goToNextPage} >Next page</button>
         </div>
 
       </div>
