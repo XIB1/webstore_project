@@ -16,4 +16,5 @@ urlpatterns = [
     path("logout_user/", views.logout_user, name="logout_user"),
     path("check_login/", views.check_login, name="check_login"),
     path("place_order/", views.place_order, name="place_order"),
+    path("search_type/<str:typed_text>", views.search_type, name="search_type"),
 ]

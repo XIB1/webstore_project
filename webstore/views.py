@@ -269,6 +269,23 @@ def place_order(request):
     return HttpResponse("Success")
 
 
+def search_type(request, typed_text):
+
+    results = Material.objects.filter(name__contains=typed_text)
+
+    lines_data = []
+    for line in results[:3]:
+        line_data = {
+            'name': line.name,  # Assuming 'line' is a serializable field
+            'description': line.description,  # Convert foreign key or complex data to string or a serializable format
+            'price': line.price,
+        }
+        lines_data.append(line_data)
+    
+    response = JsonResponse({"items":lines_data})
+
+    return response
+
 '''
 def load_data(request):
     df = pd.read_excel("C:\\repos\\webstore_project\\resources\\material.xlsx", sheet_name="material")

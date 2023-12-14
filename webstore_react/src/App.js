@@ -11,6 +11,23 @@ function getCookie(name) {
   if (parts.length === 2) return parts.pop().split(';').shift();
 }
 
+function searchBarType(event, setSearchList) {
+
+  let text = event.target.value
+  //setSearchText(event.target.value);
+
+  fetch('http://localhost:8000/webstore/search_type/' + text, {
+      method: 'GET',
+  })
+
+  .then(data => {
+    setSearchList(data.items);
+  })
+
+  //console.log(searchList)
+
+}
+
 const Card = ({ item }) => {
 
   const imagePath = process.env.PUBLIC_URL + item.image;
@@ -64,19 +81,55 @@ const Card = ({ item }) => {
   );
 };
 
+const SearchListItem = ({item}) => {
+
+  console.log("test")
+
+  return (
+
+  <li>{item.name}</li>
+
+  )
+
+}
+
 
 const Header = () => {
+
+  const [searchText, setSearchText] = useState('');
+  const [searchList, setSearchList] = useState([]);
+
+  useEffect(() => {
+    fetch('http://localhost:8000/webstore/search_type/' + searchText, {
+      method: 'GET',
+    })
+    .then(response => {
+      if (!response.ok) {
+        setSearchList([])
+        throw 'testing error';
+      }
+      return response.json();
+    })
+    .then(data => {
+      setSearchList(data.items);
+    })
+    .catch(error => {
+      console.log('Error')
+    });
+  }, [searchText]);
+
+  console.log('searchList: ' + searchList)
+  console.log('searchText: ' + searchText)
 
   return (
     
     <header style={{ 
       height: 'max(7vh, 50px)',
-      width: '100vw',
+      width: '100%',
       top: '0%',
       position: 'sticky',
       backgroundColor: 'limegreen',
       display: 'flex',
-      float: 'left',
     }}>
       
       <div style={{ 
@@ -84,13 +137,33 @@ const Header = () => {
         top: '50%',
         transform: 'translateY(-50%)',
         position: 'absolute',
-        height: '5vh',
-        width: '5vh',
         }}>
         
-        <img src='menu.png' style={{ width: 'max(5vh, 36px)' }}/>
+        <img src='menu.png' style={{ width: 'max(4vh, 36px)' }}/>
 
       </div>
+
+      <form style={{ 
+        position: 'absolute',
+        right: '2vw',
+        top: '50%',
+        transform: 'translateY(-50%)',
+      }}>
+        <input type='get' onChange={(event) => setSearchText(event.target.value)} placeholder='Search' id='searchbar' style={{fontSize: '16px'}}/>
+        
+        {
+          searchList.length > 0 && (
+            <div style={{position: 'fixed', backgroundColor: 'white', width: '100%'}}>
+              <ul>
+                {searchList.map(item => (
+                <SearchListItem key={item.id} item={item} />
+                ))}
+              </ul>
+            </div>
+          )
+        }
+
+      </form>
 
     </header>
   )
@@ -101,6 +174,7 @@ function App() {
 
   const [data, setData] = useState([]);
   const [pageNumber, setPageNumber] = useState(1);
+
 
   const goToNextPage = () => setPageNumber(prevPageNumber => prevPageNumber + 1);
   const goToPreviousPage = () => setPageNumber(prevPageNumber => Math.max(prevPageNumber - 1, 1));
