@@ -35,7 +35,6 @@ INSTALLED_APPS = [
     'webstore',
     #'webstore.apps.WebstoreConfig',
     'corsheaders',
-    'polls.apps.PollsConfig',
     'django.contrib.admin',
     'django.contrib.auth',
     'django.contrib.contenttypes',

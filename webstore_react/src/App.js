@@ -1,32 +1,8 @@
-import logo from './logo.svg';
 import './App.css';
 
 
 import React, { useState, useEffect, useRef } from 'react';
 
-
-function getCookie(name) {
-  const value = `; ${document.cookie}`;
-  const parts = value.split(`; ${name}=`);
-  if (parts.length === 2) return parts.pop().split(';').shift();
-}
-
-function searchBarType(event, setSearchList) {
-
-  let text = event.target.value
-  //setSearchText(event.target.value);
-
-  fetch('http://localhost:8000/webstore/search_type/' + text, {
-      method: 'GET',
-  })
-
-  .then(data => {
-    setSearchList(data.items);
-  })
-
-  //console.log(searchList)
-
-}
 
 const Card = ({ item }) => {
 
@@ -38,8 +14,6 @@ const Card = ({ item }) => {
         <br />
     </span>
   ));
-
-  //console.log(item)
 
   return (
       <div style={{ 
@@ -81,6 +55,7 @@ const Card = ({ item }) => {
   );
 };
 
+
 const Header = ({ setMaterialId, setSearchTerm }) => {
 
   function handleSearchInput(text) {
@@ -118,8 +93,6 @@ const Header = ({ setMaterialId, setSearchTerm }) => {
     });
   }, [searchText]);
 
-  //console.log('searchList: ' + searchList)
-  //console.log('searchText: ' + searchText)
 
   return (
     

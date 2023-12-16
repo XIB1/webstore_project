@@ -72,31 +72,26 @@ def get_materials(request, page_num, search_term, material_id):
     
     return response
 
+
 def get_basket(request):
 
     basket_cookie = request.COOKIES.get("basket_id")
-    print(basket_cookie)
-    
-    '''    if basket_cookie == None:
-        token = get_random_string(64)
-        response = HttpResponse()
-        response.set_cookie("basket_id", token, max_age=3600)
-    else:
-    '''
+
     try:
         basket = BasketHeader.objects.get(pk=basket_cookie)
         print(basket)
         lines = basket.basketline_set.all()
         lines_data = []
+        
         for line in lines:
             line_data = {
-                'line': line.line,  # Assuming 'line' is a serializable field
-                'material': int(line.material),  # Convert foreign key or complex data to string or a serializable format
+                'line': line.line,
+                'material': int(line.material),
                 'amount': line.amount,
                 'order_text': line.order_text,
             }
             lines_data.append(line_data)
-        #lines_data = list(lines.values('line', 'material', 'amount', 'order_text'))
+
         response = JsonResponse({"items":lines_data})
     except ObjectDoesNotExist:
         response = JsonResponse({"error": "Basket not found"}, status=404)
@@ -284,8 +279,8 @@ def search_type(request, typed_text):
     lines_data = []
     for line in results[:3]:
         line_data = {
-            'name': line.name,  # Assuming 'line' is a serializable field
-            'description': line.description,  # Convert foreign key or complex data to string or a serializable format
+            'name': line.name, 
+            'description': line.description,
             'price': line.price,
             'id': line.material_id,
         }
