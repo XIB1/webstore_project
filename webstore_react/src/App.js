@@ -2,7 +2,7 @@ import logo from './logo.svg';
 import './App.css';
 
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 
 
 function getCookie(name) {
@@ -81,25 +81,25 @@ const Card = ({ item }) => {
   );
 };
 
-const SearchListItem = ({item}) => {
+const Header = ({ setMaterialId, setSearchTerm }) => {
 
-  console.log("test")
-
-  return (
-
-  <li>{item.name}</li>
-
-  )
-
-}
-
-
-const Header = () => {
+  function handleSearchInput(text) {
+    text = text.replace(/<[^>]*>?/gm, '');
+    setSearchText(text);
+  }
 
   const [searchText, setSearchText] = useState('');
   const [searchList, setSearchList] = useState([]);
+  const [showDropdown, setShowDropDown] = useState(false)
+
+  const isFirstRender = useRef(true);
 
   useEffect(() => {
+    if (isFirstRender.current) {
+      isFirstRender.current = false;
+      return;
+    }
+
     fetch('http://localhost:8000/webstore/search_type/' + searchText, {
       method: 'GET',
     })
@@ -118,52 +118,70 @@ const Header = () => {
     });
   }, [searchText]);
 
-  console.log('searchList: ' + searchList)
-  console.log('searchText: ' + searchText)
+  //console.log('searchList: ' + searchList)
+  //console.log('searchText: ' + searchText)
 
   return (
     
-    <header style={{ 
-      height: 'max(7vh, 50px)',
-      width: '100%',
-      top: '0%',
-      position: 'sticky',
-      backgroundColor: 'limegreen',
-      display: 'flex',
-    }}>
+    <header>
       
-      <div style={{ 
-        left: '15px',
-        top: '50%',
-        transform: 'translateY(-50%)',
-        position: 'absolute',
-        }}>
+      <div  className='menuButton'>
         
         <img src='menu.png' style={{ width: 'max(4vh, 36px)' }}/>
 
       </div>
+      
 
-      <form style={{ 
-        position: 'absolute',
-        right: '2vw',
-        top: '50%',
-        transform: 'translateY(-50%)',
-      }}>
-        <input type='get' onChange={(event) => setSearchText(event.target.value)} placeholder='Search' id='searchbar' style={{fontSize: '16px'}}/>
-        
-        {
-          searchList.length > 0 && (
-            <div style={{position: 'fixed', backgroundColor: 'white', width: '100%'}}>
-              <ul>
-                {searchList.map(item => (
-                <SearchListItem key={item.id} item={item} />
-                ))}
-              </ul>
-            </div>
-          )
-        }
+      <div className='searchSection'>
 
-      </form>
+        <button className='searchReset' onClick={() => {
+          setMaterialId(0); 
+          setSearchText(''); 
+          setSearchTerm('null');
+          setMaterialId(0);
+          }}>Reset filters</button>
+
+        <form 
+          onSubmit={(event) => { 
+            event.preventDefault();
+            setSearchTerm(searchText);
+            setShowDropDown(false);
+            setMaterialId(0);
+          }} 
+          style={{width: '300px', margin: '10px'}}>
+
+          <input 
+            className='searchBar' 
+            type='text' 
+            value={searchText}
+            onChange={(event) => {handleSearchInput(event.target.value); setShowDropDown(true)}} 
+            placeholder='Search' 
+            autoComplete='off'
+          />
+          
+          {
+            showDropdown && searchList.length > 0 && (
+              <div className='dropdown'>
+                <ul className='searchResults'>
+                  {searchList.map(item => (
+                  <li
+                    className='searchList'
+                    key={item.id}
+                    onClick={(event) => {
+                      setMaterialId(item.id);
+                      setSearchText('');
+                    }}>{item.name+": "+item.price+" €"}
+                  </li>
+                  
+                  ))}
+                </ul>
+              </div>
+            )
+          }
+
+        </form>
+
+      </div>
 
     </header>
   )
@@ -174,15 +192,17 @@ function App() {
 
   const [data, setData] = useState([]);
   const [pageNumber, setPageNumber] = useState(1);
+  const [searchTerm, setSearchTerm] = useState('null');
+  const [materialId, setMaterialId] = useState(0);
 
 
   const goToNextPage = () => setPageNumber(prevPageNumber => prevPageNumber + 1);
   const goToPreviousPage = () => setPageNumber(prevPageNumber => Math.max(prevPageNumber - 1, 1));
 
-  console.log(pageNumber)
+  //console.log(`http://localhost:8000/webstore/get_materials/${pageNumber}/${searchTerm}/${materialId}/`)
 
   useEffect(() => {
-    fetch('http://localhost:8000/webstore/get_materials/1/', {
+    fetch(`http://localhost:8000/webstore/get_materials/${pageNumber}/${searchTerm}/${materialId}/`, {
         method: 'GET',
         credentials: 'include',
     })
@@ -198,7 +218,7 @@ function App() {
     .catch(error => {
         console.error('Error fetching data:', error);
     });
-  }, []);
+  }, [pageNumber, searchTerm, materialId]);
 
 
 
@@ -206,7 +226,7 @@ function App() {
     
     <div className="App">
       
-      <Header></Header>
+      <Header setMaterialId={setMaterialId} setSearchTerm={setSearchTerm}></Header>
 
       <div style={{ 
         width: '80%',

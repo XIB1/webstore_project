@@ -3,6 +3,7 @@ from django.http import HttpResponse, HttpResponseRedirect, JsonResponse
 from django.core.exceptions import ObjectDoesNotExist
 from django.contrib.auth import authenticate, login, logout
 from django.urls import reverse
+from django.utils.html import escape
 
 from django.utils.crypto import get_random_string
 
@@ -40,11 +41,16 @@ def index(request):
     return response
 
 
-def get_materials(request, page_num):
+def get_materials(request, page_num, search_term, material_id):
 
     basket_cookie = request.COOKIES.get("basket_id")
 
-    mats = Material.objects.all()[20*(page_num - 1):20*page_num]
+    if material_id != None and material_id != 0:
+        mats = Material.objects.filter(material_id=material_id)
+    elif search_term != None and search_term != 'null':
+        mats = Material.objects.filter(name__contains=search_term)
+    else:
+        mats = Material.objects.all()[20*(page_num - 1):20*page_num]
 
     mat_data = []
     for m in mats:
@@ -271,7 +277,9 @@ def place_order(request):
 
 def search_type(request, typed_text):
 
-    results = Material.objects.filter(name__contains=typed_text)
+    sanitized_text = escape(typed_text)
+
+    results = Material.objects.filter(name__contains=sanitized_text)
 
     lines_data = []
     for line in results[:3]:
@@ -279,6 +287,7 @@ def search_type(request, typed_text):
             'name': line.name,  # Assuming 'line' is a serializable field
             'description': line.description,  # Convert foreign key or complex data to string or a serializable format
             'price': line.price,
+            'id': line.material_id,
         }
         lines_data.append(line_data)
     

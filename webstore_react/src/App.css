@@ -40,3 +40,68 @@
 td {
   max-height: 100px
 }
+
+header {
+  height: max(7vh, 50px);
+  width: 100%;
+  top: 0%;
+  position: sticky;
+  background-color: limegreen;
+  display: flex;
+}
+
+.searchSection {
+  position: absolute;
+  right: 2vw;
+  top: 50%;
+  transform: translateY(-50%);
+  display: flex;
+  flex-direction: row;
+}
+
+.searchList {
+  position: relative;
+  width: inherit;
+  border-bottom: 1px solid grey;
+  padding-bottom: 10px;
+  padding-top: 10px;
+  padding-left: 15px;
+}
+
+.searchList:hover {
+  background-color: azure;
+}
+
+.dropdown {
+  position: fixed;
+  background-color: white;
+  width: inherit;
+}
+
+.searchBar {
+  font-size: 16px;
+  width: inherit;
+  height: max(2vh, 18px);
+}
+
+.searchReset {
+  position: relative;
+  height: max(2vh, 25px);
+  transform: translateY(39%);
+}
+
+.searchResults {
+  list-style-type: none;
+  text-align: left;
+  padding-inline-start: 0px;
+  margin: 0px;
+  cursor: pointer;
+}
+
+.menuButton {
+  left: 15px;
+  top: 50%;
+  transform: translateY(-50%);
+  position: absolute;
+  cursor: pointer;
+}
