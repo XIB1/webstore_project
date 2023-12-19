@@ -4,11 +4,14 @@ from django.core.exceptions import ObjectDoesNotExist
 from django.contrib.auth import authenticate, login, logout
 from django.urls import reverse
 from django.utils.html import escape
+from django.middleware.csrf import get_token
+from django.views.decorators.csrf import csrf_exempt
 
 from django.utils.crypto import get_random_string
 
 from datetime import datetime
 from django.utils import timezone
+import json
 
 from .models import *
 from django.contrib.auth.models import User
@@ -45,6 +48,11 @@ def get_materials(request, page_num, search_term, material_id):
 
     basket_cookie = request.COOKIES.get("basket_id")
 
+    csrf_cookie = request.COOKIES.get("csrftoken")
+
+    if csrf_cookie == None:
+        get_token(request)
+
     if material_id != None and material_id != 0:
         mats = Material.objects.filter(material_id=material_id)
     elif search_term != None and search_term != 'null':
@@ -60,6 +68,7 @@ def get_materials(request, page_num, search_term, material_id):
             'desc': m.description,
             'price': m.price,
             'stock': m.stock,
+            'date': m.date_added,
             'image':m.image,
         }
         mat_data.append(d)
@@ -166,15 +175,23 @@ def add_user(request):
 
     return response
 
-
+@csrf_exempt
 def login_user(request):
 
     if request.method == "POST":
 
-        session_key = get_random_string(64)
+        
+        print(request)
 
-        username = request.POST['username']
-        password = request.POST['password']
+        #data = json.loads(request.body)
+
+        session_key = get_random_string(64)
+        
+        username = request.POST.get('username')
+        password = request.POST.get('password')
+
+        #username = data.get('username')
+        #password = data.get('password')
 
         print(username, password)
 
@@ -289,6 +306,7 @@ def search_type(request, typed_text):
     response = JsonResponse({"items":lines_data})
 
     return response
+
 
 '''
 def load_data(request):

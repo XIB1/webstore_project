@@ -24,6 +24,7 @@ class Material(models.Model):
     description = models.TextField()
     price = models.FloatField()
     stock = models.IntegerField()
+    date_added = models.DateField()
     image = models.CharField(max_length=255)
 
     def __str__(self):

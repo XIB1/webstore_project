@@ -1,7 +1,14 @@
 import './App.css';
 
 
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect } from 'react';
+
+
+function getCsrfToken() {
+  return document.cookie.split('; ')
+    .find(row => row.startsWith('csrftoken'))
+    ?.split('=')[1];
+}
 
 
 const Card = ({ item }) => {
@@ -16,15 +23,7 @@ const Card = ({ item }) => {
   ));
 
   return (
-      <div style={{ 
-        border: '1px solid #ddd',
-        margin: '10px', 
-        padding: '4px', 
-        borderRadius: '5px',
-        display: 'flex',
-        flexDirection: 'row',
-        maxHeight: '10%',
-        }}>
+      <div className='Card'>
           <table style={{ 
             minWidth: '100%',
             }}> <tbody><tr>
@@ -51,12 +50,14 @@ const Card = ({ item }) => {
 
             </tr></tbody>
           </table>
+
+          <div className='dateStamp'>Added: {item.date}</div>
       </div>
   );
 };
 
 
-const Header = ({ setMaterialId, setSearchTerm }) => {
+const Header = ({ setMaterialId, setSearchTerm, setShowSideBar, showSideBar }) => {
 
   function handleSearchInput(text) {
     text = text.replace(/<[^>]*>?/gm, '');
@@ -67,11 +68,9 @@ const Header = ({ setMaterialId, setSearchTerm }) => {
   const [searchList, setSearchList] = useState([]);
   const [showDropdown, setShowDropDown] = useState(false)
 
-  const isFirstRender = useRef(true);
 
   useEffect(() => {
-    if (isFirstRender.current) {
-      isFirstRender.current = false;
+    if (searchText == '') {
       return;
     }
 
@@ -89,7 +88,7 @@ const Header = ({ setMaterialId, setSearchTerm }) => {
       setSearchList(data.items);
     })
     .catch(error => {
-      console.log('Error')
+      console.log(error)
     });
   }, [searchText]);
 
@@ -98,7 +97,7 @@ const Header = ({ setMaterialId, setSearchTerm }) => {
     
     <header>
       
-      <div  className='menuButton'>
+      <div  className='menuButton' onClick={() => setShowSideBar(!showSideBar)}>
         
         <img src='menu.png' style={{ width: 'max(4vh, 36px)' }}/>
 
@@ -143,6 +142,7 @@ const Header = ({ setMaterialId, setSearchTerm }) => {
                     onClick={(event) => {
                       setMaterialId(item.id);
                       setSearchText('');
+                      setShowDropDown(false);
                     }}>{item.name+": "+item.price+" €"}
                   </li>
                   
@@ -161,12 +161,61 @@ const Header = ({ setMaterialId, setSearchTerm }) => {
 }
 
 
+const SideBar = ( {showSideBar} ) => {
+
+  const handleLogin = (event) => {
+    event.preventDefault();
+
+    console.log(event)
+    const formData = new FormData(event.target);
+
+    const csrfToken = getCsrfToken();
+    
+    fetch('http://localhost:8000/webstore/login_user/', {
+      method: 'POST',
+      
+      headers: {
+        'X-CSRFToken': csrfToken,
+      },
+      body: formData,
+      credentials: 'include'
+    })
+    .then(response => {
+      if (!response.ok) {
+        throw new Error('Login failed');
+      }
+      return response.json();
+    })
+    .then(data => {
+      console.log(data);
+    })
+    .catch(error => {
+      console.error('Error');
+    });
+  };
+
+
+  return (
+  <aside className='sideBar' style={{ animation: `${showSideBar ? ' 0.2s  ease-out slideInFromLeft' : ' 0.2s ease-in slideBackToRight'}` }}>
+
+    <form className='loginForm' onSubmit={handleLogin}>
+      <input name='username' className='logInput' placeholder='Username'/>
+      <input name='password' type='password' className='logInput' placeholder='Password'/>
+      <button type='submit' className='logInput'>Login</button>
+    </form>
+
+  </aside >
+  )
+}
+
+
 function App() {
 
   const [data, setData] = useState([]);
   const [pageNumber, setPageNumber] = useState(1);
   const [searchTerm, setSearchTerm] = useState('null');
   const [materialId, setMaterialId] = useState(0);
+  const [showSideBar, setShowSideBar] = useState(false);
 
 
   const goToNextPage = () => setPageNumber(prevPageNumber => prevPageNumber + 1);
@@ -198,8 +247,15 @@ function App() {
   return (
     
     <div className="App">
-      
-      <Header setMaterialId={setMaterialId} setSearchTerm={setSearchTerm}></Header>
+
+      <Header setMaterialId={setMaterialId} setSearchTerm={setSearchTerm} setShowSideBar={setShowSideBar} showSideBar={showSideBar}></Header>
+
+      {
+        showSideBar && (
+          <SideBar showSideBar={showSideBar}></SideBar>
+        )
+
+      }
 
       <div style={{ 
         width: '80%',
