@@ -15,4 +15,6 @@ urlpatterns = [
     path("check_login/", views.check_login, name="check_login"),
     path("place_order/", views.place_order, name="place_order"),
     path("search_type/<str:typed_text>", views.search_type, name="search_type"),
+    path("populate_db/", views.populate_db, name="populate_db"),
+    path("create_item/", views.create_item, name="create_item"),
 ]

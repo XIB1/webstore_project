@@ -35,9 +35,6 @@ const Card = ({ item }) => {
               <p>{descriptionWithLineBreaks}</p>
             </td>
 
-            <td style={{ left: '50%'}}>
-              <p>{item.stock} in stock</p>
-            </td>
 
             <td>
               <p>{item.price} €</p>
@@ -70,7 +67,7 @@ const Header = ({ setMaterialId, setSearchTerm, setShowSideBar, showSideBar }) =
 
 
   useEffect(() => {
-    if (searchText == '') {
+    if (searchText === '') {
       return;
     }
 
@@ -194,6 +191,37 @@ const SideBar = ( {showSideBar} ) => {
     });
   };
 
+  const createItem = (event) => {
+    event.preventDefault();
+
+    console.log(event)
+    
+    const formData = new FormData(event.target);
+    const csrfToken = getCsrfToken();
+
+    fetch('http://localhost:8000/webstore/create_item/', {
+      method: 'POST',
+
+      headers: {
+        'X-CSRFToken': csrfToken,
+      },
+      body: formData,
+      credentials: 'include',
+    })
+    .then(response => {
+      if (!response.ok) {
+        throw new Error('Unsuccessful')
+      }
+      return response.json();
+    })
+    .then(data => {
+      console.log(data);
+    })
+    .catch(error => {
+      console.error('Error');
+    });
+  }
+
 
   return (
   <aside className='sideBar' style={{ animation: `${showSideBar ? ' 0.2s  ease-out slideInFromLeft' : ' 0.2s ease-in slideBackToRight'}` }}>
@@ -202,6 +230,13 @@ const SideBar = ( {showSideBar} ) => {
       <input name='username' className='logInput' placeholder='Username'/>
       <input name='password' type='password' className='logInput' placeholder='Password'/>
       <button type='submit' className='logInput'>Login</button>
+    </form>
+
+    <form method="post" onSubmit={createItem}>
+      <input type="text" name="title" id="title" placeholder="Title" />
+      <input type="text" name="description" id="description" placeholder="Description" />
+      <input type="number" name="price" id="price" placeholder="Price" />
+      <input type="submit" value="Create item" />
     </form>
 
   </aside >

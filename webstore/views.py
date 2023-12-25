@@ -11,7 +11,7 @@ from django.utils.crypto import get_random_string
 
 from datetime import datetime
 from django.utils import timezone
-import json
+import random
 
 from .models import *
 from django.contrib.auth.models import User
@@ -28,12 +28,15 @@ def index(request):
             count = basket.basketline_set.count()
         except:
             pass
+    
+    users = User.objects.all()
 
     response = render(
         request, 
         "webstore/index.html", {
             "token":"ok",
-            "basket_count":count
+            "basket_count":count,
+            "users":users
         }
     )
 
@@ -67,7 +70,7 @@ def get_materials(request, page_num, search_term, material_id):
             'name': m.name,
             'desc': m.description,
             'price': m.price,
-            'stock': m.stock,
+            #'stock': m.stock,
             'date': m.date_added,
             'image':m.image,
         }
@@ -78,6 +81,31 @@ def get_materials(request, page_num, search_term, material_id):
     if basket_cookie == None:
         token = get_random_string(64)
         response.set_cookie("basket_id", token, max_age=3600)
+    
+    return response
+
+@csrf_exempt
+def create_item(request):
+
+    if request.method == "POST":
+
+        title = request.POST.get('title')
+        description = request.POST.get('description')
+        price = request.POST.get('price')
+
+        print(title, description, price)
+
+        try:
+            item = Material.objects.create(
+                name=title,
+                description=description,
+                price=price,
+                date_added=datetime.today()
+            )
+            item.save()
+            response = JsonResponse({"status":"ok"}, status=200)
+        except:
+            response = JsonResponse({"error": "bad input"}, status=400)
     
     return response
 
@@ -183,15 +211,12 @@ def login_user(request):
         
         print(request)
 
-        #data = json.loads(request.body)
 
         session_key = get_random_string(64)
         
         username = request.POST.get('username')
         password = request.POST.get('password')
 
-        #username = data.get('username')
-        #password = data.get('password')
 
         print(username, password)
 
@@ -306,6 +331,23 @@ def search_type(request, typed_text):
     response = JsonResponse({"items":lines_data})
 
     return response
+
+
+def populate_db(request):
+
+    User.objects.all().delete()
+
+    for i in range(6):
+        x = random.randint(100, 999)
+        user = User.objects.create_user(
+            email='test' + str(x) + '@test.com',
+            username='test' + str(x),
+            password='pass' + str(x),
+        )
+        user.save()
+    
+    return HttpResponse()
+    
 
 
 '''

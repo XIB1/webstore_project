@@ -8,10 +8,22 @@
 <p>hello</p>
 <br>
 <p>{{token}} basket items: {{basket_count}}</p>
+<br>
+{% for u in users %}
+    <li>{{u.username}}; {{u.password}}</li>
+{% endfor %}
 
 <form method="post">
     {% csrf_token %}
     <button>Add to cart</button>
+</form>
+
+<form method="post">
+    {% csrf_token %}
+    <input type="text" id="title" placeholder="Title" />
+    <input type="text" id="description" placeholder="Description" />
+    <input type="number" id="price" placeholder="Price" />
+    <input type="submit" value="Create item" onclick="create_item(event)" />
 </form>
 
 <input type="submit" value="Submit item" onclick="submit_item()">
@@ -131,6 +143,24 @@
         data.append('csrfmiddlewaretoken', getCSRFToken()); // Function to get CSRF token
 
         xhr.open('POST', '/webstore/add_user/', true);
+        xhr.onreadystatechange = function() {
+            if (xhr.readyState === 4 && xhr.status === 200) {
+                // Handle successful user creation
+            }
+        };
+        xhr.send(data);
+    }
+
+    function create_item(event) {
+        event.preventDefault();
+        var xhr = new XMLHttpRequest();
+        var data = new FormData();
+        data.append('title', document.getElementById('title').value);
+        data.append('description', document.getElementById('description').value);
+        data.append('price', document.getElementById('price').value);
+        data.append('csrfmiddlewaretoken', getCSRFToken()); // Function to get CSRF token
+
+        xhr.open('POST', '/webstore/create_item/', true);
         xhr.onreadystatechange = function() {
             if (xhr.readyState === 4 && xhr.status === 200) {
                 // Handle successful user creation
