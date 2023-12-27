@@ -87,7 +87,12 @@ def get_materials(request, page_num, search_term, material_id):
 @csrf_exempt
 def create_item(request):
 
-    if request.method == "POST":
+    print(request.user.is_authenticated)
+
+    if request.method != "POST":
+        return JsonResponse({"error": "invalid request"}, status=400)
+    
+    if request.user.is_authenticated:
 
         title = request.POST.get('title')
         description = request.POST.get('description')
@@ -100,12 +105,17 @@ def create_item(request):
                 name=title,
                 description=description,
                 price=price,
-                date_added=datetime.today()
+                date_added=datetime.today(),
+                owner=request.user,
             )
             item.save()
             response = JsonResponse({"status":"ok"}, status=200)
         except:
             response = JsonResponse({"error": "bad input"}, status=400)
+    else:
+        response = JsonResponse({"error":"not authenticated"}, status=401)
+
+
     
     return response
 
@@ -229,7 +239,7 @@ def login_user(request):
 
             request.session['session_key'] = session_key
 
-            response = HttpResponseRedirect(reverse("webstore:index"))
+            response = JsonResponse({"status":"user logged in successfully"})
 
             
             basket_cookie = request.COOKIES.get("basket_id")
@@ -252,21 +262,22 @@ def login_user(request):
             basket.save()
 
         else:
-            response = HttpResponse(status=204)
+            response = JsonResponse({"status":"user not found"}, status=204)
 
     return response
 
 
 def logout_user(request):
     logout(request)
-    return HttpResponseRedirect(reverse("webstore:index"))
+    response = JsonResponse({"status":"user successfully logged out"})
+    return response
 
 
 def check_login(request):
     if request.user.is_authenticated:
-        return HttpResponse("User ok")
+        return JsonResponse({"loggedIn":True})
     else:
-        return HttpResponse("Not ok")
+        return JsonResponse({"loggedIn":False})
 
 
 def place_order(request):

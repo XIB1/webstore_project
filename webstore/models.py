@@ -2,16 +2,6 @@ from django.db import models
 
 from django.contrib.auth.models import User
 
-'''
-class User(models.Model):
-    user_id = models.AutoField(primary_key=True)
-    username = models.CharField(max_length=255)
-    email = models.CharField(max_length=255, default="none")
-    shipping_address = models.CharField(max_length=255)
-    created_at = models.DateTimeField()
-    hash = models.CharField(max_length=255)
-'''
-
 class OrderHeader(models.Model):
     order_id = models.AutoField(primary_key=True)
     user = models.ForeignKey(User, on_delete=models.RESTRICT)
@@ -26,6 +16,7 @@ class Material(models.Model):
     #stock = models.IntegerField()
     date_added = models.DateField()
     image = models.CharField(max_length=255)
+    owner = models.ForeignKey(User, on_delete=models.CASCADE)
 
     def __str__(self):
         return str(self.name)

@@ -51,7 +51,7 @@ const Card = ({ item }) => {
           <div className='dateStamp'>Added: {item.date}</div>
       </div>
   );
-};
+}
 
 
 const Header = ({ setMaterialId, setSearchTerm, setShowSideBar, showSideBar }) => {
@@ -158,12 +158,12 @@ const Header = ({ setMaterialId, setSearchTerm, setShowSideBar, showSideBar }) =
 }
 
 
-const SideBar = ( {showSideBar} ) => {
+const SideBar = ( {showSideBar, setLoggedIn, loggedIn} ) => {
 
   const handleLogin = (event) => {
     event.preventDefault();
 
-    console.log(event)
+    //console.log(event)
     const formData = new FormData(event.target);
 
     const csrfToken = getCsrfToken();
@@ -184,17 +184,15 @@ const SideBar = ( {showSideBar} ) => {
       return response.json();
     })
     .then(data => {
-      console.log(data);
+      setLoggedIn(true);
     })
     .catch(error => {
-      console.error('Error');
+      console.error('Error', error);
     });
-  };
+  }
 
   const createItem = (event) => {
     event.preventDefault();
-
-    console.log(event)
     
     const formData = new FormData(event.target);
     const csrfToken = getCsrfToken();
@@ -218,26 +216,75 @@ const SideBar = ( {showSideBar} ) => {
       console.log(data);
     })
     .catch(error => {
-      console.error('Error');
+      console.error('Error', error);
     });
   }
+
+  const handleLogout = (event) => {
+
+    setLoggedIn(false)
+
+    fetch('http://localhost:8000/webstore/logout_user/', {
+      method: 'GET',
+
+      //headers: {
+      //  'X-CSRFToken': csrfToken,
+      //},
+      //body: formData,
+
+      credentials: 'include',
+    })
+    .then(response => {
+      if (!response.ok) {
+        throw new Error('Unsuccessful')
+      }
+      return response.json();
+    })
+    .then(data => {
+      console.log("logged out");
+    })
+    .catch(error => {
+      console.error('Error', error);
+    });
+  }
+
+  console.log(loggedIn)
 
 
   return (
   <aside className='sideBar' style={{ animation: `${showSideBar ? ' 0.2s  ease-out slideInFromLeft' : ' 0.2s ease-in slideBackToRight'}` }}>
 
-    <form className='loginForm' onSubmit={handleLogin}>
-      <input name='username' className='logInput' placeholder='Username'/>
-      <input name='password' type='password' className='logInput' placeholder='Password'/>
-      <button type='submit' className='logInput'>Login</button>
-    </form>
 
-    <form method="post" onSubmit={createItem}>
-      <input type="text" name="title" id="title" placeholder="Title" />
-      <input type="text" name="description" id="description" placeholder="Description" />
-      <input type="number" name="price" id="price" placeholder="Price" />
-      <input type="submit" value="Create item" />
-    </form>
+    {
+      !loggedIn && (
+      <form className='loginForm' onSubmit={handleLogin}>
+        <input name='username' className='logInput' placeholder='Username'/>
+        <input name='password' type='password' className='logInput' placeholder='Password'/>
+        <button type='submit' className='logInput'>Login</button>
+      </form>
+      )
+    }
+
+    {
+      loggedIn && (
+
+        <div>
+          <button onClick={handleLogout}>Log out</button>
+
+          <br/>
+
+          <form method="post" onSubmit={createItem}>
+            <input type="text" name="title" id="title" placeholder="Title" />
+            <input type="text" name="description" id="description" placeholder="Description" />
+            <input type="number" name="price" id="price" placeholder="Price" />
+            <input type="submit" value="Create item" />
+          </form>
+        </div>
+      )
+    }
+
+
+
 
   </aside >
   )
@@ -251,6 +298,7 @@ function App() {
   const [searchTerm, setSearchTerm] = useState('null');
   const [materialId, setMaterialId] = useState(0);
   const [showSideBar, setShowSideBar] = useState(false);
+  const [loggedIn, setLoggedIn] = useState(false);
 
 
   const goToNextPage = () => setPageNumber(prevPageNumber => prevPageNumber + 1);
@@ -278,16 +326,35 @@ function App() {
   }, [pageNumber, searchTerm, materialId]);
 
 
+  useEffect(() => {
+    fetch(`http://localhost:8000/webstore/check_login/`, {
+      method: 'GET',
+      credentials: 'include',
+    })
+    .then(response => {
+      if (!response.ok) {
+        throw new Error('Network response was not ok');
+      }
+      return response.json();
+    })
+    .then(data => {
+      setLoggedIn(data.loggedIn);
+    })
+    .catch(error => {
+      console.error('Error checking login status:', error);
+    });
+  }, []);
+
 
   return (
     
     <div className="App">
 
       <Header setMaterialId={setMaterialId} setSearchTerm={setSearchTerm} setShowSideBar={setShowSideBar} showSideBar={showSideBar}></Header>
-
+      
       {
         showSideBar && (
-          <SideBar showSideBar={showSideBar}></SideBar>
+          <SideBar showSideBar={showSideBar} setLoggedIn={setLoggedIn} loggedIn={loggedIn} ></SideBar>
         )
 
       }
