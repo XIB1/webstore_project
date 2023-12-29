@@ -17,4 +17,5 @@ urlpatterns = [
     path("search_type/<str:typed_text>", views.search_type, name="search_type"),
     path("populate_db/", views.populate_db, name="populate_db"),
     path("create_item/", views.create_item, name="create_item"),
+    path("change_password/", views.change_password, name="change_password"),
 ]

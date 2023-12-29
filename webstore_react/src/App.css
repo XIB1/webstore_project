@@ -116,17 +116,36 @@ header {
   z-index: 2;
 }
 
-.loginForm {
+.forms {
   display: flex;
   flex-direction: column;
   width: min(200px, 80%);
   margin-left: auto;
   margin-right: auto;
-  margin-top: 15px;
+  margin-top: 3vh;
+  text-align: center;
 }
 
-.logInput {
+.formInputs {
   margin-bottom: 10px;
+}
+
+.logoutButton {
+  text-align: center;
+  width: min(200px, 80%);
+  margin-top: 3vh;
+}
+
+.errorMessage {
+  margin-top: 0;
+  font-size: 12px;
+  color: red;
+}
+
+.successMessage {
+  margin-top: 0;
+  font-size: 12px;
+  color: green;
 }
 
 @keyframes slideInFromLeft {

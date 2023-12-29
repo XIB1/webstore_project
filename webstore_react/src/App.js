@@ -160,6 +160,12 @@ const Header = ({ setMaterialId, setSearchTerm, setShowSideBar, showSideBar }) =
 
 const SideBar = ( {showSideBar, setLoggedIn, loggedIn} ) => {
 
+  
+  const [showItemError, setShowItemError] = useState(false);
+  const [showItemSuccess, setShowItemSuccess] = useState(false);
+  const [showPassError, setShowPassError] = useState(false);
+  const [showPassSuccess, setShowPassSuccess] = useState(false);
+
   const handleLogin = (event) => {
     event.preventDefault();
 
@@ -181,9 +187,9 @@ const SideBar = ( {showSideBar, setLoggedIn, loggedIn} ) => {
       if (!response.ok) {
         throw new Error('Login failed');
       }
-      return response.json();
     })
     .then(data => {
+      console.log(data)
       setLoggedIn(true);
     })
     .catch(error => {
@@ -208,15 +214,21 @@ const SideBar = ( {showSideBar, setLoggedIn, loggedIn} ) => {
     })
     .then(response => {
       if (!response.ok) {
+        setShowItemSuccess(false)
+        setShowItemError(true)
         throw new Error('Unsuccessful')
       }
-      return response.json();
     })
     .then(data => {
+      setShowItemSuccess(true)
+      setShowItemError(false)
       console.log(data);
+      event.target.reset()
     })
     .catch(error => {
       console.error('Error', error);
+      setShowItemSuccess(false)
+      setShowItemError(true)
     });
   }
 
@@ -248,19 +260,53 @@ const SideBar = ( {showSideBar, setLoggedIn, loggedIn} ) => {
     });
   }
 
-  console.log(loggedIn)
+  const changePassword = (event) => {
+    event.preventDefault();
+    
+    const formData = new FormData(event.target);
+    const csrfToken = getCsrfToken();
+
+    event.target.reset()
+
+    fetch('http://localhost:8000/webstore/change_password/', {
+      method: 'POST',
+
+      headers: {
+        'X-CSRFToken': csrfToken,
+      },
+      body: formData,
+
+      credentials: 'include',
+    })
+    .then(response => {
+      if (!response.ok) {
+        setShowPassError(true)
+        setShowPassSuccess(false)
+        throw new Error('Unsuccessful')
+      }
+    })
+    .then(data => {
+      console.log(data);
+      setShowPassSuccess(true)
+      setShowPassError(false)
+    })
+    .catch(error => {
+      console.error('Error', error);
+    });
+  }
 
 
   return (
+    
   <aside className='sideBar' style={{ animation: `${showSideBar ? ' 0.2s  ease-out slideInFromLeft' : ' 0.2s ease-in slideBackToRight'}` }}>
 
 
     {
       !loggedIn && (
-      <form className='loginForm' onSubmit={handleLogin}>
-        <input name='username' className='logInput' placeholder='Username'/>
-        <input name='password' type='password' className='logInput' placeholder='Password'/>
-        <button type='submit' className='logInput'>Login</button>
+      <form className='forms' onSubmit={handleLogin}>
+        <input name='username' className='formInputs' placeholder='Username'/>
+        <input name='password' type='password' className='formInputs' placeholder='Password'/>
+        <button type='submit' className='formInputs'>Login</button>
       </form>
       )
     }
@@ -269,16 +315,31 @@ const SideBar = ( {showSideBar, setLoggedIn, loggedIn} ) => {
       loggedIn && (
 
         <div>
-          <button onClick={handleLogout}>Log out</button>
+
+          <button className='logoutButton' onClick={handleLogout}>Log out</button>
 
           <br/>
 
-          <form method="post" onSubmit={createItem}>
-            <input type="text" name="title" id="title" placeholder="Title" />
-            <input type="text" name="description" id="description" placeholder="Description" />
-            <input type="number" name="price" id="price" placeholder="Price" />
-            <input type="submit" value="Create item" />
+          <form className='forms' method="post" onSubmit={createItem}>
+            <input className='formInputs' type="text" name="title" id="title" placeholder="Title" />
+            <input className='formInputs' type="text" name="description" id="description" placeholder="Description" />
+            <input className='formInputs' type="number" name="price" id="price" placeholder="Price" />
+            <input className='formInputs' type="submit" value="Create item" />
+            {showItemError && (<p className='errorMessage'>Issue creating item</p>)}
+            {showItemSuccess && (<p className='successMessage'>Item successfully created</p>)}
           </form>
+
+          <br/>
+
+          <form className='forms' method="post" onSubmit={changePassword}>
+            <input className='formInputs' type="password" name="oldpass" id="oldpass" placeholder="Old password" />
+            <input className='formInputs' type="password" name="conf_oldpass" id="conf_oldpass" placeholder="Confim old password" />
+            <input className='formInputs' type="password" name="newpass" id="newpass" placeholder="New password" />
+            <input className='formInputs' type="submit" value="Change password" />
+            {showPassError && (<p className='errorMessage'>Passwords incorrect or not matching</p>)}
+            {showPassSuccess && (<p className='successMessage'>Password successfully changed</p>)}
+          </form>
+
         </div>
       )
     }

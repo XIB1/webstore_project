@@ -228,11 +228,8 @@ def login_user(request):
         password = request.POST.get('password')
 
 
-        print(username, password)
-
         user = authenticate(request, username=username, password=password)
 
-        print(user)
 
         if user != None:
             login(request, user)
@@ -262,7 +259,7 @@ def login_user(request):
             basket.save()
 
         else:
-            response = JsonResponse({"status":"user not found"}, status=204)
+            response = JsonResponse({"status":"username or password incorrect"}, status=400)
 
     return response
 
@@ -271,6 +268,30 @@ def logout_user(request):
     logout(request)
     response = JsonResponse({"status":"user successfully logged out"})
     return response
+
+
+@csrf_exempt
+def change_password(request):
+
+    if request.method == "POST" and request.user.is_authenticated:
+
+        oldpass = request.POST.get('oldpass')
+        conf_oldpass = request.POST.get('conf_oldpass')
+        newpass = request.POST.get('newpass')
+
+        if oldpass != conf_oldpass:
+            return JsonResponse({"status":"passwords not matching"}, status=400)
+
+        user = authenticate(request, username=request.user.username, password=oldpass)
+
+        if user != None:
+            user.set_password(newpass)
+            user.save()
+            return JsonResponse({"status":"password changed"})
+        else:
+            return JsonResponse({"status":"password incorrect"}, status=400)
+
+
 
 
 def check_login(request):

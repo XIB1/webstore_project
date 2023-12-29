@@ -17,6 +17,7 @@ class Material(models.Model):
     date_added = models.DateField()
     image = models.CharField(max_length=255)
     owner = models.ForeignKey(User, on_delete=models.CASCADE)
+    status = models.CharField(max_length=255)
 
     def __str__(self):
         return str(self.name)
