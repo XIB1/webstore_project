@@ -13,7 +13,6 @@ class Material(models.Model):
     name = models.CharField(max_length=255)
     description = models.TextField()
     price = models.FloatField()
-    #stock = models.IntegerField()
     date_added = models.DateField()
     image = models.CharField(max_length=255)
     owner = models.ForeignKey(User, on_delete=models.CASCADE)

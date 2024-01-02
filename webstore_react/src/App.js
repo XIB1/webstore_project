@@ -22,6 +22,25 @@ const Card = ({ item }) => {
     </span>
   ));
 
+  const addItemToBasket = (item) => {
+    fetch(`http://localhost:8000/webstore/add_item/${item.id}/`, {
+      method: 'POST',
+      credentials: 'include',
+    })
+    .then(response => {
+        if (!response.ok) {
+            throw new Error('Network response was not ok');
+        }
+        return response.json();
+    })
+    .then(data => {
+        console.log(data);
+    })
+    .catch(error => {
+        console.error('Error adding item: ', error);
+    });
+  }
+
   return (
       <div className='Card'>
           <table style={{ 
@@ -41,7 +60,7 @@ const Card = ({ item }) => {
             </td>
 
             <td>
-              <input type='submit' value='Add to basket'/>
+              <input type='submit' value='Add to basket' onClick={addItemToBasket(item)}/>
               
             </td>
 
@@ -169,10 +188,12 @@ const SideBar = ( {showSideBar, setLoggedIn, loggedIn} ) => {
   const handleLogin = (event) => {
     event.preventDefault();
 
-    //console.log(event)
     const formData = new FormData(event.target);
-
     const csrfToken = getCsrfToken();
+
+    if (event.target.password.value === '' || event.target.username.value === '') {
+      return;
+    }
     
     fetch('http://localhost:8000/webstore/login_user/', {
       method: 'POST',
@@ -186,6 +207,35 @@ const SideBar = ( {showSideBar, setLoggedIn, loggedIn} ) => {
     .then(response => {
       if (!response.ok) {
         throw new Error('Login failed');
+      }
+    })
+    .then(data => {
+      console.log(data)
+      setLoggedIn(true);
+    })
+    .catch(error => {
+      console.error('Error', error);
+    });
+  }
+
+  const handleUserCreate = (event) => {
+    event.preventDefault();
+
+    const formData = new FormData(event.target);
+    const csrfToken = getCsrfToken();
+
+    fetch('http://localhost:8000/webstore/add_user/', {
+      method: 'POST',
+      
+      headers: {
+        'X-CSRFToken': csrfToken,
+      },
+      body: formData,
+      credentials: 'include'
+    })
+    .then(response => {
+      if (!response.ok) {
+        throw new Error('User create failed');
       }
     })
     .then(data => {
@@ -238,12 +288,6 @@ const SideBar = ( {showSideBar, setLoggedIn, loggedIn} ) => {
 
     fetch('http://localhost:8000/webstore/logout_user/', {
       method: 'GET',
-
-      //headers: {
-      //  'X-CSRFToken': csrfToken,
-      //},
-      //body: formData,
-
       credentials: 'include',
     })
     .then(response => {
@@ -253,7 +297,7 @@ const SideBar = ( {showSideBar, setLoggedIn, loggedIn} ) => {
       return response.json();
     })
     .then(data => {
-      console.log("logged out");
+      //console.log("logged out");
     })
     .catch(error => {
       console.error('Error', error);
@@ -297,17 +341,30 @@ const SideBar = ( {showSideBar, setLoggedIn, loggedIn} ) => {
 
 
   return (
-    
+
   <aside className='sideBar' style={{ animation: `${showSideBar ? ' 0.2s  ease-out slideInFromLeft' : ' 0.2s ease-in slideBackToRight'}` }}>
 
 
     {
       !loggedIn && (
-      <form className='forms' onSubmit={handleLogin}>
-        <input name='username' className='formInputs' placeholder='Username'/>
-        <input name='password' type='password' className='formInputs' placeholder='Password'/>
-        <button type='submit' className='formInputs'>Login</button>
-      </form>
+        <div>
+          <form className='forms' onSubmit={handleLogin}>
+            <input name='username' className='formInputs' placeholder='Username'/>
+            <input name='password' type='password' className='formInputs' placeholder='Password'/>
+            <button type='submit' className='formInputs'>Login</button>
+          </form>
+
+          <br/>
+
+          <form className='forms' onSubmit={handleUserCreate}>
+            <input name='username' className='formInputs' placeholder='Username'/>
+            <input name='email' className='formInputs' placeholder='Email'/>
+            <input name='password' type='password' className='formInputs' placeholder='Password'/>
+            <input name='conf_password' type='password' className='formInputs' placeholder='Confirm password'/>
+            <button type='submit' className='formInputs'>Sign up</button>
+          </form>
+        </div>
+
       )
     }
 
@@ -360,12 +417,15 @@ function App() {
   const [materialId, setMaterialId] = useState(0);
   const [showSideBar, setShowSideBar] = useState(false);
   const [loggedIn, setLoggedIn] = useState(false);
+  
+  const [lastPage, setLastPage] = useState(false);
 
 
-  const goToNextPage = () => setPageNumber(prevPageNumber => prevPageNumber + 1);
-  const goToPreviousPage = () => setPageNumber(prevPageNumber => Math.max(prevPageNumber - 1, 1));
+  const goToNextPage = () => { setPageNumber(prevPageNumber => prevPageNumber + 1); window.scrollTo({top:0, left:0}) };
+  const goToPreviousPage = () => { setPageNumber(prevPageNumber => Math.max(prevPageNumber - 1, 1)); window.scrollTo({top:0, left:0}) };
 
-  //console.log(`http://localhost:8000/webstore/get_materials/${pageNumber}/${searchTerm}/${materialId}/`)
+
+
 
   useEffect(() => {
     fetch(`http://localhost:8000/webstore/get_materials/${pageNumber}/${searchTerm}/${materialId}/`, {
@@ -380,6 +440,7 @@ function App() {
     })
     .then(data => {
         setData(data.items);
+        setLastPage(data.lastpage);
     })
     .catch(error => {
         console.error('Error fetching data:', error);
@@ -433,8 +494,8 @@ function App() {
         ))}
 
         <div style={{ margin: '20px' }}>
-          <button onClick={goToPreviousPage} >Previous page</button>
-          <button onClick={goToNextPage} >Next page</button>
+          { pageNumber > 1 && <button onClick={goToPreviousPage} >Previous page</button>}
+          { !lastPage && <button onClick={goToNextPage} >Next page</button>}
         </div>
 
       </div>

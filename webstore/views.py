@@ -61,7 +61,16 @@ def get_materials(request, page_num, search_term, material_id):
     elif search_term != None and search_term != 'null':
         mats = Material.objects.filter(name__contains=search_term)
     else:
-        mats = Material.objects.all()[20*(page_num - 1):20*page_num]
+        mats = Material.objects.all()
+    
+    mat_count = mats.count()
+
+    if mat_count <= 20*page_num:
+        lastpage = True
+    else:
+        lastpage = False
+
+    mats = mats[20*(page_num - 1):20*page_num]
 
     mat_data = []
     for m in mats:
@@ -70,13 +79,12 @@ def get_materials(request, page_num, search_term, material_id):
             'name': m.name,
             'desc': m.description,
             'price': m.price,
-            #'stock': m.stock,
             'date': m.date_added,
             'image':m.image,
         }
         mat_data.append(d)
 
-    response = JsonResponse({"items":mat_data})
+    response = JsonResponse({"items":mat_data, "lastpage":lastpage})
 
     if basket_cookie == None:
         token = get_random_string(64)
@@ -152,7 +160,7 @@ def add_item(request, material_id):
 
     basket_cookie = request.COOKIES.get("basket_id")
 
-    response = HttpResponse()
+    response = JsonResponse()
     
     if basket_cookie == None:
         basket_cookie = get_random_string(64)
@@ -187,14 +195,18 @@ def add_item(request, material_id):
 
     return response
 
-
+@csrf_exempt
 def add_user(request):
 
     if request.method == "POST":
 
-        email = request.POST['email']
-        username = request.POST['username']
-        password = request.POST['password']
+        email = request.POST.get('email')
+        username = request.POST.get('username')
+        password = request.POST.get('password')
+        conf_password = request.POST.get('conf_password')
+
+        if password != conf_password:
+            return JsonResponse({"status":"Passwords not matching"}, status=400)
     
         try:
             try:
@@ -205,11 +217,10 @@ def add_user(request):
                     username=username,
                     password=password
                 )
-                print(user)
                 user.save()
-            response = HttpResponse(status=200)
+            response = JsonResponse({"status":"User created"})
         except:
-            response = HttpResponse(status=400)
+            response = JsonResponse({"status":"Issue creating user"}, status=400)
 
     return response
 
@@ -292,8 +303,6 @@ def change_password(request):
             return JsonResponse({"status":"password incorrect"}, status=400)
 
 
-
-
 def check_login(request):
     if request.user.is_authenticated:
         return JsonResponse({"loggedIn":True})
@@ -372,10 +381,25 @@ def populate_db(request):
     for i in range(6):
         x = random.randint(100, 999)
         user = User.objects.create_user(
-            email='test' + str(x) + '@test.com',
-            username='test' + str(x),
+            email='testuser' + str(x) + '@test.com',
+            username='testuser' + str(x),
             password='pass' + str(x),
         )
+        
+
+        if i < 3:
+            for j in range(10):
+                m = Material.objects.create(
+                    name = 'testuser' + str(x) + "'s item " + str(j),
+                    description = 'This is an item for sale by testuser ' + str(x),
+                    price = random.randint(100, 9999),
+                    date_added = datetime.today(),
+                    image = '',
+                    owner = user,
+                    status = 'for sale',
+                )
+                m.save()
+        
         user.save()
     
     return HttpResponse()
