@@ -74,6 +74,12 @@ def get_materials(request, page_num, search_term, material_id):
 
     mat_data = []
     for m in mats:
+
+        if m.owner == request.user:
+            is_owner = 1
+        else:
+            is_owner = 0
+
         d = {
             'id': m.material_id,
             'name': m.name,
@@ -81,6 +87,7 @@ def get_materials(request, page_num, search_term, material_id):
             'price': m.price,
             'date': m.date_added,
             'image':m.image,
+            'is_owner':is_owner
         }
         mat_data.append(d)
 
@@ -142,8 +149,9 @@ def get_basket(request):
             line_data = {
                 'line': line.line,
                 'material': int(line.material),
-                'amount': line.amount,
-                'order_text': line.order_text,
+                'name': line.material.name,
+                'desc': line.material.description,
+                'price': line.material.price,
             }
             lines_data.append(line_data)
 
@@ -155,17 +163,16 @@ def get_basket(request):
     
     return response
     
-
+@csrf_exempt
 def add_item(request, material_id):
 
     basket_cookie = request.COOKIES.get("basket_id")
 
-    response = JsonResponse()
+    response = JsonResponse({"status":"none"})
     
     if basket_cookie == None:
         basket_cookie = get_random_string(64)
         response.set_cookie("basket_id", basket_cookie, max_age=3600)
-
     
     try:
         basket = BasketHeader.objects.get(pk=basket_cookie)
@@ -177,23 +184,41 @@ def add_item(request, material_id):
 
     item_count = basket.basketline_set.count()
 
+
     try:
         mat = Material.objects.get(pk=material_id)
 
-        try:
-            line = BasketLine.objects.get(material_id=material_id, basket_id=basket_cookie)
-            line.amount = line.amount + 1
-            line.save()
-        except:
-            line = BasketLine(line=item_count + 1, material=mat, amount=1, basket=basket)
-            line.save()
+        if mat.owner == request.user:
+            return JsonResponse({"status":"user is owner"})
+
+        line = BasketLine(line=item_count + 1, material=mat, basket=basket)
+        line.save()
         
         basket.basket_saved = timezone.now()
-    
+
+        response = JsonResponse({"status":"success"})
+
     except:
         print("mat not found")
+        response = JsonResponse({"status":"failed"})
 
     return response
+
+@csrf_exempt
+def remove_item(request, material_id):
+
+    basket_cookie = request.COOKIES.get("basket_id")
+
+    if basket_cookie == None:
+        response = JsonResponse({"status":"no active basket"})
+        basket_cookie = get_random_string(64)
+        response.set_cookie("basket_id", basket_cookie, max_age=3600)
+        return response
+    
+    lines = BasketLine.objects.filter(material_id=material_id)
+    lines.delete()
+
+    return JsonResponse({"status":"line removed"})
 
 @csrf_exempt
 def add_user(request):
@@ -280,7 +305,6 @@ def logout_user(request):
     response = JsonResponse({"status":"user successfully logged out"})
     return response
 
-
 @csrf_exempt
 def change_password(request):
 
@@ -340,8 +364,6 @@ def place_order(request):
             order_line = new_order.orderline_set.create(
                 order_item=item.line,
                 material=item.material,
-                amount=item.amount,
-                order_text="",
                 status="Not processed"
             )
             order_line.save()

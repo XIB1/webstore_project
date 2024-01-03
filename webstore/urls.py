@@ -9,6 +9,7 @@ urlpatterns = [
     path("get_materials/<int:page_num>/<str:search_term>/<int:material_id>/", views.get_materials, name="get_materials"),
     path("get_basket/", views.get_basket, name="get_basket"),
     path("add_item/<int:material_id>/", views.add_item, name="add_item"),
+    path("remove_item/<int:material_id>/", views.remove_item, name="remove_item"),
     path("add_user/", views.add_user, name="add_user"),
     path("login_user/", views.login_user, name="login_user"),
     path("logout_user/", views.logout_user, name="logout_user"),

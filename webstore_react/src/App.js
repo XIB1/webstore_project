@@ -22,8 +22,9 @@ const Card = ({ item }) => {
     </span>
   ));
 
-  const addItemToBasket = (item) => {
-    fetch(`http://localhost:8000/webstore/add_item/${item.id}/`, {
+  const addItemToBasket = (event) => {
+    console.log(event.target)
+    fetch(`http://localhost:8000/webstore/add_item/${event.target.dataset.id}/`, {
       method: 'POST',
       credentials: 'include',
     })
@@ -59,10 +60,8 @@ const Card = ({ item }) => {
               <p>{item.price} €</p>
             </td>
 
-            <td>
-              <input type='submit' value='Add to basket' onClick={addItemToBasket(item)}/>
-              
-            </td>
+            { !item.is_owner ?  <td><input data-id={item.id} type='submit' value='Add to basket' onClick={addItemToBasket}/></td> :null}
+            { item.is_owner ?  <td><input disabled data-id={item.id} type='submit' value='Your item' /></td> :null}
 
             </tr></tbody>
           </table>
@@ -73,7 +72,7 @@ const Card = ({ item }) => {
 }
 
 
-const Header = ({ setMaterialId, setSearchTerm, setShowSideBar, showSideBar }) => {
+const Header = ({ setMaterialId, setSearchTerm, setShowSideBar, showSideBar, showBasket, setShowBasket }) => {
 
   function handleSearchInput(text) {
     text = text.replace(/<[^>]*>?/gm, '');
@@ -170,6 +169,8 @@ const Header = ({ setMaterialId, setSearchTerm, setShowSideBar, showSideBar }) =
 
         </form>
 
+        <div onClick={() => setShowBasket(!showBasket)}>Basket</div>
+
       </div>
 
     </header>
@@ -177,7 +178,7 @@ const Header = ({ setMaterialId, setSearchTerm, setShowSideBar, showSideBar }) =
 }
 
 
-const SideBar = ( {showSideBar, setLoggedIn, loggedIn} ) => {
+const SideBar = ( {showSideBar, setLoggedIn, loggedIn, reloadTrigger, setReloadTrigger} ) => {
 
   
   const [showItemError, setShowItemError] = useState(false);
@@ -211,7 +212,8 @@ const SideBar = ( {showSideBar, setLoggedIn, loggedIn} ) => {
     })
     .then(data => {
       console.log(data)
-      setLoggedIn(true);
+      setLoggedIn(true)
+      setReloadTrigger(reloadTrigger + 1)
     })
     .catch(error => {
       console.error('Error', error);
@@ -298,6 +300,7 @@ const SideBar = ( {showSideBar, setLoggedIn, loggedIn} ) => {
     })
     .then(data => {
       //console.log("logged out");
+      setReloadTrigger(reloadTrigger + 1)
     })
     .catch(error => {
       console.error('Error', error);
@@ -339,10 +342,11 @@ const SideBar = ( {showSideBar, setLoggedIn, loggedIn} ) => {
     });
   }
 
+  //style={{ animation: `${showSideBar ? ' 0.2s  ease-out slideInFromLeft' : ' 0.2s ease-in slideBackToRight'}` }}
 
   return (
 
-  <aside className='sideBar' style={{ animation: `${showSideBar ? ' 0.2s  ease-out slideInFromLeft' : ' 0.2s ease-in slideBackToRight'}` }}>
+  <aside className='sideBar' >
 
 
     {
@@ -409,6 +413,83 @@ const SideBar = ( {showSideBar, setLoggedIn, loggedIn} ) => {
 }
 
 
+const BasketCard = ( {item, reloadBasket, setReloadBasket} ) => {
+  
+  const removeItem = (event) => {
+    event.preventDefault()
+
+    const mat_id = event.target.dataset.item
+
+    fetch(`http://localhost:8000/webstore/remove_item/${mat_id}/`, {
+        method: 'POST',
+        credentials: 'include',
+    })
+    .then(response => {
+        if (!response.ok) {
+            throw new Error('Network response was not ok');
+        }
+        return response.json();
+    })
+    .then(data => {
+      console.log(data)
+      setReloadBasket(reloadBasket + 1)
+    })
+    .catch(error => {
+        console.error('Error removing item', error);
+    });
+  }
+  
+  return (
+    <div className='basTop'>
+      <div className='bas1'>
+        <p className='basketName'>{item.name}</p>
+        <p className='basketDesc'>{item.desc}</p>
+      </div>
+      <div className='bas2'>
+        <p className='basketPric'>{item.price} €</p>
+        <input data-item={item.material} type='submit' value="Remove" onClick={removeItem}/>
+      </div>
+      <br/><br/>
+    </div>
+  )
+}
+
+
+const Basket = ( {} ) => {
+  
+  const [basketData, setBasketData] = useState([]);
+  const [reloadBasket, setReloadBasket] = useState(0);
+
+  useEffect(() => {
+    fetch(`http://localhost:8000/webstore/get_basket/`, {
+        method: 'GET',
+        credentials: 'include',
+    })
+    .then(response => {
+        if (!response.ok) {
+            throw new Error('Network response was not ok');
+        }
+        return response.json();
+    })
+    .then(data => {
+      setBasketData(data.items)
+    })
+    .catch(error => {
+        console.error('Error fetching basket:', error);
+    });
+  }, [reloadBasket]);
+
+
+  return (
+    <aside className='basketBar' >
+      {basketData.map(item => (
+        <BasketCard key={item.id} item={item} reloadBasket={reloadBasket} setReloadBasket={setReloadBasket} />
+      ))}
+    </aside>
+  )
+}
+
+
 function App() {
 
   const [data, setData] = useState([]);
@@ -416,9 +497,10 @@ function App() {
   const [searchTerm, setSearchTerm] = useState('null');
   const [materialId, setMaterialId] = useState(0);
   const [showSideBar, setShowSideBar] = useState(false);
+  const [showBasket, setShowBasket] = useState(false);
   const [loggedIn, setLoggedIn] = useState(false);
-  
   const [lastPage, setLastPage] = useState(false);
+  const [reloadTrigger, setReloadTrigger] = useState(0);
 
 
   const goToNextPage = () => { setPageNumber(prevPageNumber => prevPageNumber + 1); window.scrollTo({top:0, left:0}) };
@@ -445,7 +527,7 @@ function App() {
     .catch(error => {
         console.error('Error fetching data:', error);
     });
-  }, [pageNumber, searchTerm, materialId]);
+  }, [pageNumber, searchTerm, materialId, reloadTrigger]);
 
 
   useEffect(() => {
@@ -472,11 +554,18 @@ function App() {
     
     <div className="App">
 
-      <Header setMaterialId={setMaterialId} setSearchTerm={setSearchTerm} setShowSideBar={setShowSideBar} showSideBar={showSideBar}></Header>
+      <Header setMaterialId={setMaterialId} setSearchTerm={setSearchTerm} setShowSideBar={setShowSideBar} showSideBar={showSideBar} showBasket={showBasket} setShowBasket={setShowBasket} ></Header>
       
       {
         showSideBar && (
-          <SideBar showSideBar={showSideBar} setLoggedIn={setLoggedIn} loggedIn={loggedIn} ></SideBar>
+          <SideBar showSideBar={showSideBar} setLoggedIn={setLoggedIn} loggedIn={loggedIn} reloadTrigger={reloadTrigger} setReloadTrigger={setReloadTrigger}></SideBar>
+        )
+
+      }
+
+      {
+        showBasket && (
+          <Basket showBasket={showBasket}></Basket>
         )
 
       }
@@ -493,10 +582,11 @@ function App() {
           <Card key={item.id} item={item} />
         ))}
 
-        <div style={{ margin: '20px' }}>
-          { pageNumber > 1 && <button onClick={goToPreviousPage} >Previous page</button>}
-          { !lastPage && <button onClick={goToNextPage} >Next page</button>}
-        </div>
+          <div className='pageButtons'>
+            <div className='pgt'>Page: {pageNumber}</div>
+            { pageNumber > 1 && <button className='pgb' onClick={goToPreviousPage} >Previous page</button>}
+            { !lastPage && <button className='pgb' onClick={goToNextPage} >Next page</button>}
+          </div>
 
       </div>
 
